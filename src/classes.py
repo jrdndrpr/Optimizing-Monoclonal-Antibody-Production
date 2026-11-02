@@ -1,14 +1,11 @@
-# =======================================================================
-# CLASSES
-# Define custom classes in this file.
-# =======================================================================
+"""Class used to organize the mAb optimization workflow."""
 
 import os
 
 from src.constants import FIGURE_DIR, TABLE_DIR, FEATURES
 from src.functions import (
     load_data, evaluate_models, optimize, intervals_by_time, add_intervals,
-    factor_sensitivity, make_figures, update_readme,
+    make_figures,
 )
 
 
@@ -31,10 +28,9 @@ class MonoclonalAntibodyOptimizer:
         self.grid = add_intervals(self.grid, self.residual_limits)
         index = self.grid["Predicted space-time profit [$/L/d]"].idxmax()
         self.best = self.grid.loc[index].copy()
-        self.sensitivities = factor_sensitivity(self.model, self.design, self.best)
 
     def export_results(self):
-        """Save output tables and figures, and refresh the README results section."""
+        """Save the model comparison, optimization tables, and five figures."""
         os.makedirs(FIGURE_DIR, exist_ok=True)
         os.makedirs(TABLE_DIR, exist_ok=True)
 
@@ -46,8 +42,6 @@ class MonoclonalAntibodyOptimizer:
         self.residual_limits.to_csv(
             os.path.join(TABLE_DIR, "prediction_interval_residuals.csv"), index=False)
         self.design.to_csv(os.path.join(TABLE_DIR, "selected_batches.csv"), index=False)
-        self.sensitivities.to_csv(
-            os.path.join(TABLE_DIR, "factor_sensitivity.csv"), index=False)
         self.best.to_frame().T.to_csv(
             os.path.join(TABLE_DIR, "recommended_conditions.csv"), index=False)
 
@@ -56,8 +50,7 @@ class MonoclonalAntibodyOptimizer:
             "Predicted space-time profit [$/L/d]", ascending=False)
         top_conditions.to_csv(os.path.join(TABLE_DIR, "candidate_optima.csv"), index=False)
 
-        make_figures(self.comparison, self.cv_df, self.grid, self.best, self.sensitivities)
-        update_readme(self.best, self.comparison, self.cv_rmse, self.cv_r2, self.sensitivities)
+        make_figures(self.comparison, self.cv_df, self.grid, self.best)
 
     def print_summary(self):
         """Print a compact summary once all outputs have been generated."""
@@ -70,4 +63,4 @@ class MonoclonalAntibodyOptimizer:
                 "Predicted space-time profit [$/L/d]", "Predicted space-time yield [mg/L/d]"]
         for key in keys:
             print(f"  {key}: {self.best[key]:,.4f}")
-        print("\nFigures saved in figures/, tables saved in tables/, and README.md updated.")
+        print("\nFive figures saved in figures/ and six tables saved in tables/.")

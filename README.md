@@ -10,7 +10,7 @@ This project uses machine learning to identify profitable starting conditions an
 - **Developed** regression pipelines with grouped cross-validation and hyperparameter tuning.
 - **Compared** polynomial ridge and k-nearest-neighbor models using unseen starting conditions.
 - **Optimized** culture conditions and harvest time using production economics.
-- **Visualized** performance, uncertainty, and operating-condition sensitivity with reproducible figures.
+- **Visualized** model accuracy, batch trends, and harvest-time economics with reproducible figures.
 
 ---
 
@@ -34,7 +34,7 @@ Put `initial_conditions.csv` and the 30 selected batch files (`batch_0100.csv`�
 python main.py
 ```
 
-This single command reads the local CSV files, fits and compares models, finds the predicted optimum, and saves outputs to `figures/` and `tables/`. It also refreshes the marked recommendation below. No downloads or additional scripts are required. The program accepts `batches_` as an alternative filename prefix.
+This single command reads the local CSV files, fits and compares models, finds the predicted optimum, and saves outputs to `figures/` and `tables/`. No downloads or additional scripts are required. The program accepts `batches_` as an alternative filename prefix.
 
 ---
 
@@ -60,9 +60,9 @@ After model selection, the winning regressor is fitted to all 30 batches. It pre
 
 The program selects the candidate with the highest predicted space-time profit. It does not search arbitrary unmeasured initial-condition combinations, because glucose and glutamine are correlated in these 30 runs. To describe uncertainty, it estimates time-specific 95% prediction limits from held-out prediction errors and propagates them to value, profit, and yield. These limits are approximate and do not prove that the selected setting is globally optimal.
 
-### Exporting figures, tables, and the README
+### Exporting figures and tables
 
-Finally, `main.py` calls the export stage. Code in `src/` uses `os.path.join()` to write CSV tables into `tables/` and PNG figures into `figures/`. The tables retain exact numerical results for inspection, while the figures make model performance and economic trade-offs easier to interpret. The marked results section in this README is updated automatically so the reported values correspond to the latest successful run. All seven figures are embedded below using relative paths, which allows them to display directly on GitHub.
+Finally, `main.py` calls the export stage. Code in `src/` uses `os.path.join()` to write CSV tables into `tables/` and PNG figures into `figures/`. The tables retain exact numerical results for inspection, while the figures make model performance and economic trade-offs easier to interpret. The README documents the results from the supplied 30 batches and is not modified by the Python program. All five figures are embedded below using relative paths, so they display directly on GitHub. If the input data or model settings change, the report can be reviewed and updated using the new exported tables.
 
 ---
 
@@ -74,7 +74,7 @@ The chosen batches are `0100`–`0109`, `0200`–`0209`, and `0300`–`0309`: te
 
 The critical limitation is that glucose and glutamine change together. For example, every 10 mM glucose batch here uses 3 mM glutamine, and every 15 mM glucose batch uses 1 mM glutamine. As a result, the models can compare the **observed combinations**, but cannot independently determine what changing only one nutrient would do. To avoid unsupported extrapolation, optimization is limited to the supplied starting conditions.
 
-**[Table 1 — Selected batches](tables/selected_batches.csv)** lists all 30 IDs and their initial glucose, glutamine, and VCD values. It documents the experimental coverage and makes the nutrient correlation visible before interpreting model predictions.
+**[Table 1 — Selected batches](tables/selected_batches.csv)** lists all 30 IDs and their initial glucose, glutamine, and VCD values. It documents the experimental coverage and makes the nutrient correlation visible before interpreting model predictions. In particular, the table distinguishes repeated runs from genuinely different starting conditions. Replicates increase the amount of measured time-series data but do not provide as many independent conditions for testing how well a model generalizes. This distinction motivates grouping the folds by starting conditions.
 
 ### Model comparison and accuracy
 
@@ -84,13 +84,13 @@ Two regression approaches were tested. Polynomial ridge offers smooth interpolat
 
 ![Figure 1. Grouped cross-validation RMSE for the two regression models.](figures/01_model_comparison.png)
 
-**Figure 2** compares held-out predictions against measured mAb concentrations. Points close to the dashed diagonal indicate accurate predictions; departures from the line reveal errors that a single RMSE cannot show. The overall pattern follows the diagonal, although individual estimates deviate. **[Table 3 — Held-out predictions](tables/held_out_predictions.csv)** contains each observed concentration, prediction, residual, batch ID, and time, allowing errors to be examined in detail.
+**Figure 2** compares held-out predictions against measured mAb concentrations. Points close to the dashed diagonal indicate accurate predictions; departures from the line reveal errors that a single RMSE cannot show. The overall pattern follows the diagonal, although individual estimates deviate. Looking at the complete spread of points is useful because a good average error does not guarantee that every batch is predicted equally well. **[Table 3 — Held-out predictions](tables/held_out_predictions.csv)** contains each observed concentration, prediction, residual, batch ID, and time, allowing errors to be examined in detail.
 
 ![Figure 2. Observed versus predicted mAb concentrations from cross-validation.](figures/02_cv_parity.png)
 
 ### Production profiles and harvest timing
 
-**Figure 3** shows representative batch mAb trajectories. Concentrations often rise rapidly before approaching a plateau, but the plateau and fluctuations differ among starting conditions. This is why selecting harvest time solely from the final mAb concentration is not appropriate: a longer run may make more product while tying up the reactor for additional days.
+**Figure 3** shows representative batch mAb trajectories. Concentrations often rise rapidly before approaching a plateau, but the plateau and fluctuations differ among starting conditions. The plotted subset allows individual curves to be distinguished without overlapping all 30 series in one graph. This is why selecting harvest time solely from the final mAb concentration is not appropriate: a longer run may make more product while tying up the reactor for additional days. The trajectories also show why culture time is included as a model input rather than predicting only a final endpoint.
 
 ![Figure 3. Representative mAb concentrations throughout the batch runs.](figures/03_batch_trajectories.png)
 
@@ -102,11 +102,9 @@ Space-time profit divides the value remaining after culture cost by harvest dura
 
 The decision is based on predicted **space-time profit**, not maximum final mAb concentration or maximum space-time yield. Initial culture cost is calculated as $10 per mM of glucose, $20 per mM of glutamine, and $0.0005 per cell/mL of initial VCD, all per litre. mAb value is $1,000 per mg/L. Adding nutrients or cells is worthwhile only when the additional antibody value offsets their cost and any change in total batch duration.
 
-<!-- RESULTS_START -->
-
 ### Validated model performance and recommendation
 
-The selected architecture was **kNN** with settings `{'kneighborsregressor__n_neighbors': 5, 'kneighborsregressor__weights': 'distance'}`. Its grouped cross-validation RMSE was **0.067 mg/L** (fold-score standard deviation 0.027 mg/L). The alternative **Polynomial ridge** obtained **0.083 mg/L**. The selected model's pooled out-of-fold RMSE was 0.072 mg/L and out-of-fold R² was 0.921. These errors are measured on unseen initial-condition groups, while the model itself was refitted on all 30 runs for optimization.
+The selected architecture was **kNN** with settings `{'kneighborsregressor__n_neighbors': 5, 'kneighborsregressor__weights': 'distance'}`. Its grouped cross-validation RMSE was **0.062 mg/L** (fold-score standard deviation 0.016 mg/L). The alternative **Polynomial ridge** obtained **0.086 mg/L**. The selected model's pooled out-of-fold RMSE was 0.064 mg/L and out-of-fold R² was 0.937. These errors are measured on unseen initial-condition groups, while the model itself was refitted on all 30 runs for optimization.
 
 | Metric | Estimate | Approx. 95% PI lower | Approx. 95% PI upper |
 | --- | ---: | ---: | ---: |
@@ -115,35 +113,18 @@ The selected architecture was **kNN** with settings `{'kneighborsregressor__n_ne
 | Initial viable cell density [cells/mL] | 400,000 | — | — |
 | Harvest time [d] | 4.33 | — | — |
 | Culture cost [$/L] | 370.00 | — | — |
-| Culture value at harvest [$/L] | 760.00 | 606.15 | 874.96 |
-| Space-time profit [$/L/d] | 73.12 | 44.28 | 94.68 |
-| Space-time mAb yield [mg/L/d] | 0.143 | 0.114 | 0.164 |
-
-**Initial glucose:** Over the levels represented in these batches, increasing this factor decreased predicted space-time profit from 115.50 to 73.12 $/(L·d), with the other inputs and harvest time held at their recommended values. Some factor settings combined with the recommended other inputs were not directly measured, so these conditional predictions may be less reliable. These are model predictions, not established causal effects.
-
-**Initial glutamine:** Over the levels represented in these batches, increasing this factor increased predicted space-time profit from 73.12 to 78.00 $/(L·d), with the other inputs and harvest time held at their recommended values. Some factor settings combined with the recommended other inputs were not directly measured, so these conditional predictions may be less reliable. These are model predictions, not established causal effects.
-
-**Initial VCD:** Over the levels represented in these batches, increasing this factor decreased predicted space-time profit from 81.38 to 15.75 $/(L·d), with the other inputs and harvest time held at their recommended values. Some factor settings combined with the recommended other inputs were not directly measured, so these conditional predictions may be less reliable. These are model predictions, not established causal effects.
+| Culture value at harvest [$/L] | 760.00 | 617.75 | 878.25 |
+| Space-time profit [$/L/d] | 73.12 | 46.45 | 95.30 |
+| Space-time mAb yield [mg/L/d] | 0.143 | 0.116 | 0.165 |
 
 The values above optimize the **predicted mean** space-time profit on the supplied observed starting conditions and common measured harvest times, not a guarantee of the globally best physical operating point. The 95% limits are empirical, time-specific held-out residual quantiles transported to the recommended condition. They include process and forecast error represented by the selected runs, but do not fully account for model selection, selection of the maximum, or differing local variance.
-<!-- RESULTS_END -->
 
-**[Table 5 — Recommended conditions](tables/recommended_conditions.csv)** contains the selected starting conditions, harvest time, predicted concentration, cost, value, profit, yield, and approximate intervals as unrounded numerical outputs. **[Table 6 — Candidate optima](tables/candidate_optima.csv)** ranks the best harvest-time result for each observed starting-condition combination. This comparison shows whether the winner is markedly better than nearby alternatives or only narrowly ahead, which matters when prediction intervals overlap.
-
-### Nutrient combinations and sensitivity
-
-**Figure 5** is a heatmap of the best predicted space-time profit for each **measured glucose–glutamine pair**, after comparing its available VCD values and harvest times. The highest observed-pair value occurs at 15 mM glucose and 1 mM glutamine. Blank squares are intentionally unmeasured combinations, not zero-profit cases. The figure therefore summarizes joint nutrient settings rather than proving an isolated glucose or glutamine effect.
-
-![Figure 5. Best predicted profit at each observed glucose–glutamine combination.](figures/05_glucose_glutamine_heatmap.png)
-
-**Figure 6** varies one initial factor at a time while holding the others at their recommended values. It illustrates the model's conditional response to glucose, glutamine, and VCD and highlights the trade-off between production value and starting cost. Some plotted combinations were **not** actually run, so these curves are exploratory model predictions, not experimental evidence of individual causal effects. **[Table 7 — Factor sensitivity](tables/factor_sensitivity.csv)** gives the plotted profit and yield values and flags which starting conditions were actually observed.
-
-![Figure 6. Conditional space-time profit sensitivity to initial glucose, glutamine, and VCD.](figures/06_factor_sensitivity.png)
+**[Table 5 — Recommended conditions](tables/recommended_conditions.csv)** contains the selected starting conditions, harvest time, predicted concentration, cost, value, profit, yield, and approximate intervals as unrounded numerical outputs. The reported mAb value comes from predicted concentration multiplied by the specified selling value; it should not be interpreted as experimentally measured revenue. **[Table 6 — Candidate optima](tables/candidate_optima.csv)** ranks the best harvest-time result for each observed starting-condition combination. Each row represents the most profitable measured harvest time for one set of starting conditions, rather than every time point tested. This provides a direct comparison of the candidate operating policies and shows whether the winner is clearly preferable or only narrowly ahead, particularly when their prediction intervals overlap.
 
 ### Residual diagnostics and limitations
 
-**Figure 7** plots cross-validated prediction residuals against culture time. The mean residual remains near zero for most of the observed period, suggesting limited systematic time-dependent bias, while the shaded standard-deviation band shows how prediction errors vary. This check is important because a model with low overall RMSE can still be inaccurate near the intended harvest time.
+**Figure 5** plots cross-validated prediction residuals against culture time. A residual is the measured concentration minus the predicted concentration: positive values indicate underprediction, while negative values indicate overprediction. The mean residual remains near zero for most of the observed period, suggesting limited systematic time-dependent bias, while the shaded standard-deviation band shows how prediction errors vary. The shaded region is one standard deviation, **not** the 95% prediction interval shown in Figure 4. This check is important because a model with low overall RMSE can still be inaccurate near the intended harvest time.
 
-![Figure 7. Mean held-out prediction residuals and their standard deviation over time.](figures/07_cv_residuals.png)
+![Figure 5. Mean held-out prediction residuals and their standard deviation over time.](figures/05_cv_residuals.png)
 
-The reported 95% prediction intervals come from held-out residual quantiles, not independent confirmation runs; they may be too narrow or too wide for a particular untested setting. The 30-run selection also confounds nutrient effects and covers only part of the complete experimental grid. A stronger follow-up experiment would replicate the recommended initial conditions and systematically vary glucose and glutamine independently. Until then, the reported conditions are a defensible **model-based recommendation**, not a verified global optimum.
+The reported 95% prediction intervals come from held-out residual quantiles, not independent confirmation runs; they may be too narrow or too wide for a particular untested setting. The 30-run selection also confounds nutrient effects and covers only part of the complete experimental grid. A stronger follow-up experiment would replicate the recommended initial conditions and systematically vary glucose and glutamine independently. The residual plot helps assess prediction error but cannot eliminate uncertainty in untested starting conditions. Before applying these settings in a real culture, additional validation would be needed to confirm their reproducibility and evaluate whether the predicted financial benefit holds. Until then, the reported conditions are a defensible **model-based recommendation**, not a verified global optimum.
