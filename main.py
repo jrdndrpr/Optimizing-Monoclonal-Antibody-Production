@@ -1,4 +1,7 @@
-"""Find operating conditions that maximize mAb space-time profit."""
+# =====================================================================
+# MAIN PROGRAM
+# Your code starts here. This is the file that will be run.
+# =====================================================================
 
 import sys
 
