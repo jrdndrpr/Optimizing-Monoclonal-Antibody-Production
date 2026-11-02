@@ -1,7 +1,7 @@
-"""Load batch data, compare regression models, and export optimization evidence.
-
-Only main.py is an entry point; these functions are imported by src/classes.py.
-"""
+# =======================================================================
+# FUNCTIONS
+# Define reusable helper functions in this file.
+# =======================================================================
 
 import os
 import matplotlib
@@ -46,11 +46,7 @@ def find_batch_file(batch_id):
 
 
 def ensure_batch_files():
-    """Require all 30 batch CSV files locally; never access the internet.
-
-    Accept either batch_####.csv or batches_####.csv and report all missing
-    run IDs together so the user can fix the datasets/ folder in one pass.
-    """
+    """Require all 30 batch CSV files locally; never access the internet."""
     missing = [i for i in BATCH_IDS if find_batch_file(i) is None]
     if missing:
         filenames = ", ".join(f"{i:04d}" for i in missing)
@@ -160,10 +156,7 @@ def evaluate_models(df):
 
 
 def make_grid(design, times):
-    """Predict only initial-condition combinations measured in the 30 selected runs.
-
-    This avoids optimizing over unsupported glucose/glutamine/VCD combinations.
-    """
+    """Predict only initial-condition combinations measured in the 30 selected runs."""
     conditions = design[COLS_INITIAL].drop_duplicates().to_numpy(dtype=float)
     n_times = len(times)
     expanded = np.repeat(conditions, n_times, axis=0)
@@ -190,11 +183,7 @@ def optimize(model, design, times):
 
 
 def intervals_by_time(df_cv, times):
-    """Empirical marginal 95% prediction limits from held-out condition residuals.
-
-    Model-selection uncertainty is not included. These are approximate, not
-    finite-sample guarantees and may be optimistic at unsampled factor settings.
-    """
+    """Empirical marginal 95% prediction limits from held-out condition residuals."""
     records = []
     for t in times:
         residuals = df_cv.loc[df_cv["Time [h]"] == t, "CV residual [mg/L]"].to_numpy()

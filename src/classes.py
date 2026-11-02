@@ -1,4 +1,7 @@
-"""Class used to organize the mAb optimization workflow."""
+# =======================================================================
+# CLASSES
+# Define custom classes in this file.
+# =======================================================================
 
 import os
 
