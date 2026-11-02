@@ -1,7 +1,7 @@
-# =======================================================================
-# FUNCTIONS
-# Define reusable helper functions in this file.
-# =======================================================================
+"""Load batch data, compare regression models, and export optimization evidence.
+
+Only main.py is an entry point; these functions are imported by src/classes.py.
+"""
 
 import os
 import matplotlib
@@ -46,7 +46,11 @@ def find_batch_file(batch_id):
 
 
 def ensure_batch_files():
-    """Require all 30 batch CSV files locally; never access the internet."""
+    """Require all 30 batch CSV files locally; never access the internet.
+
+    Accept either batch_####.csv or batches_####.csv and report all missing
+    run IDs together so the user can fix the datasets/ folder in one pass.
+    """
     missing = [i for i in BATCH_IDS if find_batch_file(i) is None]
     if missing:
         filenames = ", ".join(f"{i:04d}" for i in missing)
@@ -112,8 +116,18 @@ def load_data():
     return design, initial, out, times
 
 
-def evaluate_models(df):
+def model_inputs(df):
+    """Use elapsed time and log(1 + time) to capture the early rise and later plateau.
+
+    Time remains in days. The extra feature is computed from the same measured
+    harvest time and does not require additional datasets or extrapolated inputs.
+    """
     x = df[FEATURES].to_numpy(dtype=float)
+    return np.column_stack((x, np.log1p(x[:, -1])))
+
+
+def evaluate_models(df):
+    x = model_inputs(df)
     y = df["mAb [mg/L]"].to_numpy(dtype=float)
     groups = df["Condition group"].to_numpy()
     cv = GroupKFold(n_splits=5)
@@ -156,7 +170,10 @@ def evaluate_models(df):
 
 
 def make_grid(design, times):
-    """Predict only initial-condition combinations measured in the 30 selected runs."""
+    """Predict only initial-condition combinations measured in the 30 selected runs.
+
+    This avoids optimizing over unsupported glucose/glutamine/VCD combinations.
+    """
     conditions = design[COLS_INITIAL].drop_duplicates().to_numpy(dtype=float)
     n_times = len(times)
     expanded = np.repeat(conditions, n_times, axis=0)
@@ -171,7 +188,7 @@ def make_grid(design, times):
 
 def optimize(model, design, times):
     grid = make_grid(design, times)
-    grid["Predicted mAb [mg/L]"] = np.maximum(0, model.predict(grid[FEATURES].to_numpy(dtype=float)))
+    grid["Predicted mAb [mg/L]"] = np.maximum(0, model.predict(model_inputs(grid)))
     grid["Culture cost [$/L]"] = culture_cost(grid[FEATURES[0]], grid[FEATURES[1]], grid["Initial VCD [cells/mL]"])
     value, profit, yield_ = economic_metrics(grid["Predicted mAb [mg/L]"], grid["Culture cost [$/L]"], grid[FEATURES[3]])
     grid["Predicted value [$/L]"] = value
@@ -183,7 +200,11 @@ def optimize(model, design, times):
 
 
 def intervals_by_time(df_cv, times):
-    """Empirical marginal 95% prediction limits from held-out condition residuals."""
+    """Empirical marginal 95% prediction limits from held-out condition residuals.
+
+    Model-selection uncertainty is not included. These are approximate, not
+    finite-sample guarantees and may be optimistic at unsampled factor settings.
+    """
     records = []
     for t in times:
         residuals = df_cv.loc[df_cv["Time [h]"] == t, "CV residual [mg/L]"].to_numpy()

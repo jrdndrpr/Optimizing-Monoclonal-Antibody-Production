@@ -1,3 +1,3 @@
 Model,CV train RMSE [mg/L],CV validation RMSE [mg/L],CV SD [mg/L],Hyperparameters,Selected
-kNN,0.029871884350722567,0.06666942919073535,0.026585283327430462,"{'kneighborsregressor__n_neighbors': 5, 'kneighborsregressor__weights': 'distance'}",True
-Polynomial ridge,0.06084807557739904,0.08321363260261565,0.0241880880493008,"{'polynomialfeatures__degree': 3, 'ridge__alpha': 10.0}",False
+Polynomial ridge,0.0744168741789425,0.10639119734620002,0.033193131302121245,"{'polynomialfeatures__degree': 1, 'ridge__alpha': 0.1}",True
+kNN,0.027857714248219728,0.1673390413225044,0.09524513909622831,"{'kneighborsregressor__n_neighbors': 15, 'kneighborsregressor__weights': 'distance'}",False

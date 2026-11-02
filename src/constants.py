@@ -1,7 +1,4 @@
-# =======================================================================
-# CONSTANTS
-# Define constant values that do not change throughout your program.
-# =======================================================================
+"""Constants and file paths used throughout the project."""
 
 import os
 
@@ -12,8 +9,11 @@ DATA_DIR = os.path.join(PROJECT_DIR, "datasets")
 FIGURE_DIR = os.path.join(PROJECT_DIR, "figures")
 TABLE_DIR = os.path.join(PROJECT_DIR, "tables")
 
-# Exactly 30 batch runs: 0100-0109, 0200-0209, and 0300-0309.
-BATCH_IDS = tuple(range(100, 110)) + tuple(range(200, 210)) + tuple(range(300, 310))
+# 30 selected batches: ten starting conditions with three replicates each.
+BATCH_IDS = (
+    tuple(range(1, 7)) + tuple(range(22, 28)) + tuple(range(106, 109))
+    + tuple(range(202, 211)) + tuple(range(301, 307))
+)
 DOWNTIME_DAYS = 1.0
 
 FEATURES = [
