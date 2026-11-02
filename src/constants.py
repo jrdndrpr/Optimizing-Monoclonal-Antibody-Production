@@ -1,4 +1,7 @@
-"""Constants and file paths used throughout the project."""
+# =======================================================================
+# CONSTANTS
+# Define constant values that do not change throughout your program.
+# =======================================================================
 
 import os
 

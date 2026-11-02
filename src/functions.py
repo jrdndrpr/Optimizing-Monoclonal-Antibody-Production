@@ -1,7 +1,7 @@
-"""Load batch data, compare regression models, and export optimization evidence.
-
-Only main.py is an entry point; these functions are imported by src/classes.py.
-"""
+# =======================================================================
+# FUNCTIONS
+# Define reusable helper functions in this file.
+# =======================================================================
 
 import os
 import matplotlib
@@ -26,14 +26,12 @@ def culture_cost(glucose, glutamine, vcd):
     """Culture cost [$/L], with vcd in cells/mL (not millions)."""
     return 10.0 * np.asarray(glucose) + 20.0 * np.asarray(glutamine) + 0.0005 * np.asarray(vcd)
 
-
 def economic_metrics(mab, cost, days):
     """Profit and yield include exactly one day of turnaround downtime."""
     value = 1000.0 * np.asarray(mab)
     space_time_profit = (value - np.asarray(cost)) / (np.asarray(days) + DOWNTIME_DAYS)
     space_time_yield = np.asarray(mab) / (np.asarray(days) + DOWNTIME_DAYS)
     return value, space_time_profit, space_time_yield
-
 
 def find_batch_file(batch_id):
     """Accept both batch_####.csv and batches_####.csv for the stated run IDs."""
@@ -43,7 +41,6 @@ def find_batch_file(batch_id):
         if os.path.isfile(candidate):
             return candidate
     return None
-
 
 def ensure_batch_files():
     """Require all 30 batch CSV files locally; never access the internet.
@@ -60,7 +57,6 @@ def ensure_batch_files():
             "alongside initial_conditions.csv and rerun main.py. "
             "No files are downloaded automatically."
         )
-
 
 def load_data():
     initial = pd.read_csv(os.path.join(DATA_DIR, "initial_conditions.csv"))
@@ -117,11 +113,7 @@ def load_data():
 
 
 def model_inputs(df):
-    """Use elapsed time and log(1 + time) to capture the early rise and later plateau.
-
-    Time remains in days. The extra feature is computed from the same measured
-    harvest time and does not require additional datasets or extrapolated inputs.
-    """
+    """Use elapsed time and log(1 + time) to capture the early rise and later plateau."""
     x = df[FEATURES].to_numpy(dtype=float)
     return np.column_stack((x, np.log1p(x[:, -1])))
 
@@ -170,10 +162,7 @@ def evaluate_models(df):
 
 
 def make_grid(design, times):
-    """Predict only initial-condition combinations measured in the 30 selected runs.
-
-    This avoids optimizing over unsupported glucose/glutamine/VCD combinations.
-    """
+    """Predict only initial-condition combinations measured in the 30 selected runs."""
     conditions = design[COLS_INITIAL].drop_duplicates().to_numpy(dtype=float)
     n_times = len(times)
     expanded = np.repeat(conditions, n_times, axis=0)
@@ -200,11 +189,7 @@ def optimize(model, design, times):
 
 
 def intervals_by_time(df_cv, times):
-    """Empirical marginal 95% prediction limits from held-out condition residuals.
-
-    Model-selection uncertainty is not included. These are approximate, not
-    finite-sample guarantees and may be optimistic at unsampled factor settings.
-    """
+    """Empirical marginal 95% prediction limits from held-out condition residuals."""
     records = []
     for t in times:
         residuals = df_cv.loc[df_cv["Time [h]"] == t, "CV residual [mg/L]"].to_numpy()

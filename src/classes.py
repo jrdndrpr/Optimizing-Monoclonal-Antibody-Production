@@ -1,4 +1,7 @@
-"""Class used to organize the mAb optimization workflow."""
+# =======================================================================
+# CLASSES
+# Define custom classes in this file.
+# =======================================================================
 
 import os
 
@@ -7,7 +10,6 @@ from src.functions import (
     load_data, evaluate_models, optimize, intervals_by_time, add_intervals,
     make_figures,
 )
-
 
 class MonoclonalAntibodyOptimizer:
     """Store results as the analysis progresses from raw data to a recommendation."""
